@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+  DOTNET_NOLOGO: '1'
+
+jobs:
+  test:
+    runs-on: ubuntu-26.04
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+          workloads: wasm-tools
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            e2e/package-lock.json
+
+      - name: Setup npm
+        run: npm install --global npm@11.21.2
+
+      - name: Install Cloudflare dependencies
+        run: npm ci
+
+      - name: Install browser test dependencies
+        working-directory: e2e
+        run: npm ci
+
+      - name: Clean
+        run: dotnet clean --configuration Release
+
+      - name: Restore .NET dependencies
+        run: dotnet restore
+
+      - name: Build Release
+        run: dotnet build --configuration Release --no-restore --disable-build-servers -p:UseSharedCompilation=false
+
+      - name: Publish optimized Release
+        run: dotnet publish --configuration Release --no-restore --output dist --disable-build-servers -p:UseSharedCompilation=false
+
+      - name: Build Cloudflare project
+        run: npm run build:cloudflare:prebuilt
+
+      - name: Install Playwright browser
+        working-directory: e2e
+        run: npx playwright install --with-deps chromium
+
+      - name: Test published application
+        working-directory: e2e
+        run: npx playwright test
+        env:
+          CI: true
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          if-no-files-found: error
+          retention-days: 7

@@ -1,0 +1,15 @@
+{
+  "name": "blazor-guid-generator-e2e",
+  "private": true,
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "npm@11.21.2",
+  "scripts": {
+    "test": "playwright test",
+    "test:live": "playwright test --config=playwright.live.config.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0"
+  }
+}
