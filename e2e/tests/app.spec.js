@@ -31,6 +31,112 @@ test("refresh replaces generated values", async ({ page }) => {
   await expect(page.locator("#guid-container")).not.toHaveText(before);
 });
 
+test("uses the Clipboard API when it is available", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (text) => {
+          window.copiedWithClipboardApi = text;
+        },
+      },
+    });
+  });
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Copy GUID's" })).toBeVisible({ timeout: 30000 });
+
+  let message;
+  page.once("dialog", async (dialog) => {
+    message = dialog.message();
+    await dialog.dismiss();
+  });
+  await page.getByRole("button", { name: "Copy GUID's" }).click();
+
+  const expected = await page.locator("#guid-container").innerText();
+  const copied = await page.evaluate(() => window.copiedWithClipboardApi);
+  expect(copied).toBe(expected);
+  expect(message).toBe("GUIDs copied");
+});
+
+test("falls back to selection copy when the Clipboard API fails", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async () => {
+          throw new DOMException("Clipboard access denied", "NotAllowedError");
+        },
+      },
+    });
+    document.execCommand = (command) => {
+      window.fallbackCopyCommand = command;
+      window.fallbackCopiedText = document.getElementById("copy-input")?.value;
+      return true;
+    };
+  });
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Copy GUID's" })).toBeVisible({ timeout: 30000 });
+
+  let message;
+  page.once("dialog", async (dialog) => {
+    message = dialog.message();
+    await dialog.dismiss();
+  });
+  await page.getByRole("button", { name: "Copy GUID's" }).click();
+
+  const expected = await page.locator("#guid-container").innerText();
+  const fallback = await page.evaluate(() => ({
+    command: window.fallbackCopyCommand,
+    text: window.fallbackCopiedText,
+  }));
+  expect(fallback).toEqual({ command: "copy", text: expected });
+  expect(message).toBe("GUIDs copied");
+});
+
+test("writes the generated values to the real Chromium clipboard", async ({ page, context, browserName }) => {
+  test.skip(browserName !== "chromium", "Clipboard permissions are exposed to Playwright in Chromium.");
+  await context.grantPermissions(["clipboard-read", "clipboard-write"], {
+    origin: new URL(page.url()).origin,
+  });
+
+  let message;
+  page.once("dialog", async (dialog) => {
+    message = dialog.message();
+    await dialog.dismiss();
+  });
+  await page.getByRole("button", { name: "Copy GUID's" }).click();
+
+  const expected = await page.locator("#guid-container").innerText();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  expect(copied).toBe(expected);
+  expect(message).toBe("GUIDs copied");
+});
+
+test("reports when both clipboard methods fail", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async () => {
+          throw new DOMException("Clipboard access denied", "NotAllowedError");
+        },
+      },
+    });
+    document.execCommand = () => false;
+  });
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Copy GUID's" })).toBeVisible({ timeout: 30000 });
+
+  let message;
+  page.once("dialog", async (dialog) => {
+    message = dialog.message();
+    await dialog.dismiss();
+  });
+  await page.getByRole("button", { name: "Copy GUID's" }).click();
+
+  expect(message).toBe("Unable to copy GUIDs");
+});
+
 test("SPA fallback serves the application shell", async ({ page }) => {
   await page.goto("/missing-route");
   await expect(page.getByRole("heading", { name: "Online .NET GUID generator" })).toBeVisible();

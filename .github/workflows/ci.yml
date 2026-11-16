@@ -62,7 +62,7 @@ jobs:
 
       - name: Install Playwright browser
         working-directory: e2e
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Test published application
         working-directory: e2e

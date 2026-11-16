@@ -1,5 +1,5 @@
 // @ts-check
-const { defineConfig } = require("@playwright/test");
+const { defineConfig, devices } = require("@playwright/test");
 
 module.exports = defineConfig({
   testDir: "./tests",
@@ -9,4 +9,9 @@ module.exports = defineConfig({
     baseURL: process.env.BASE_URL || "https://newguids.swimburger.net",
     trace: "retain-on-failure",
   },
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+    { name: "webkit", use: { ...devices["Desktop Safari"] } },
+  ],
 });
