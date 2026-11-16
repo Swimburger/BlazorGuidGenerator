@@ -26,24 +26,23 @@ jobs:
           global-json-file: global.json
           workloads: wasm-tools
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
-          node-version: '24'
-          cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            e2e/package-lock.json
+          node-version: '26'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
-      - name: Setup npm
-        run: npm install --global npm@11.21.2
+      - name: Install JavaScript dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: Install Cloudflare dependencies
-        run: npm ci
-
-      - name: Install browser test dependencies
-        working-directory: e2e
-        run: npm ci
+      - name: Verify Bootstrap assets
+        run: |
+          pnpm run sync:bootstrap
+          git diff --exit-code -- wwwroot/css/bootstrap
 
       - name: Clean
         run: dotnet clean --configuration Release
@@ -58,15 +57,15 @@ jobs:
         run: dotnet publish --configuration Release --no-restore --output dist --disable-build-servers -p:UseSharedCompilation=false
 
       - name: Build Cloudflare project
-        run: npm run build:cloudflare:prebuilt
+        run: pnpm run build:cloudflare:prebuilt
 
       - name: Install Playwright browser
         working-directory: e2e
-        run: npx playwright install --with-deps chromium firefox webkit
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
 
       - name: Test published application
         working-directory: e2e
-        run: npx playwright test
+        run: pnpm exec playwright test
         env:
           CI: true
 

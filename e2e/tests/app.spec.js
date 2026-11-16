@@ -9,6 +9,7 @@ test.beforeEach(async ({ page }) => {
 test("loads the published application", async ({ page }) => {
   await expect(page).toHaveTitle("Online .NET GUID generator");
   await expect(page.getByRole("heading", { name: "Online .NET GUID generator" })).toBeVisible();
+  await expect(page.locator('script[src*="googletagmanager.com"]')).toHaveCount(0);
   const value = (await page.locator("#guid-container").innerText()).trim();
   expect(value).toMatch(/^\{[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\}$/i);
 });

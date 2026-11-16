@@ -15,7 +15,7 @@ const contentTypes = new Map([
 ]);
 
 if (!fs.existsSync(path.join(root, "index.html"))) {
-  console.error(`Published app not found at ${root}. Run npm run build first.`);
+  console.error(`Published app not found at ${root}. Run pnpm run build first.`);
   process.exit(1);
 }
 

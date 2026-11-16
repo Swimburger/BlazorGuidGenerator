@@ -1,0 +1,7 @@
+packages:
+  - cloudflare
+  - e2e
+
+allowBuilds:
+  esbuild: true
+  workerd: true
