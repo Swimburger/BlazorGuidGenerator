@@ -3,7 +3,8 @@
     <input type="number" class="form-control" id="amount-of-guids-input" min="0" step="1"
         @bind="AmountOfGuids" @bind:event="oninput">
 </div>
-<div>
+<fieldset class="guid-options mb-3">
+    <legend class="visually-hidden">GUID formatting options</legend>
     <div class="form-check">
         <input class="form-check-input" type="checkbox" id="uppercase-checkbox" @bind="makeGuidsUpperCase">
         <label class="form-check-label" for="uppercase-checkbox">
@@ -22,11 +23,12 @@
             Hyphens ...-...-...-...-...
         </label>
     </div>
+</fieldset>
+<div class="guid-actions d-flex flex-wrap gap-2">
+    <button type="button" class="btn btn-primary" @onclick="RefreshGuids">Refresh GUID's</button>
+    <button type="button" class="btn btn-light" onclick="copyGuids()">Copy GUID's</button>
 </div>
-<button type="button" class="btn btn-primary" @onclick="RefreshGuids">Refresh GUID's</button>
-<button type="button" class="btn btn-light" onclick="copyGuids()">Copy GUID's</button>
-<br>
-<pre id="guid-container">
+<pre id="guid-container" tabindex="0" aria-label="Generated GUIDs">
 @foreach (var guid in guids)
 {
 @FormatGuid(guid)

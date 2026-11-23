@@ -14,6 +14,20 @@ test("loads the published application", async ({ page }) => {
   expect(value).toMatch(/^\{[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\}$/i);
 });
 
+test("supports zoom, dark mode, and a narrow viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Refresh GUID's" })).toBeVisible({ timeout: 30000 });
+
+  const viewport = await page.locator('meta[name="viewport"]').getAttribute("content");
+  expect(viewport).not.toContain("user-scalable=no");
+  expect(viewport).not.toContain("maximum-scale");
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme)).toBe("light dark");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).not.toBe("rgb(255, 255, 255)");
+});
+
 test("generates and formats multiple GUIDs", async ({ page }) => {
   await page.locator("#amount-of-guids-input").fill("3");
   await page.locator("#uppercase-checkbox").check();
