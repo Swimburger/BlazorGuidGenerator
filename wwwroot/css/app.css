@@ -39,6 +39,12 @@ body {
   text-align: center;
 }
 
+.copy-status {
+  align-self: center;
+  min-width: 7rem;
+  font-weight: 600;
+}
+
 #copy-input {
   height: 1px;
   width: 1px;

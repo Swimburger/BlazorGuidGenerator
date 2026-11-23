@@ -1,5 +1,5 @@
 ﻿<div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-    <label class="form-label mb-0" for="amount-of-guids-input">Amount of GUID's:</label>
+    <label class="form-label mb-0" for="amount-of-guids-input">Amount of GUIDs:</label>
     <input type="number" class="form-control" id="amount-of-guids-input" min="0" step="1"
         @bind="AmountOfGuids" @bind:event="oninput">
 </div>
@@ -25,8 +25,9 @@
     </div>
 </fieldset>
 <div class="guid-actions d-flex flex-wrap gap-2">
-    <button type="button" class="btn btn-primary" @onclick="RefreshGuids">Refresh GUID's</button>
-    <button type="button" class="btn btn-light" onclick="copyGuids()">Copy GUID's</button>
+    <button type="button" class="btn btn-primary" @onclick="RefreshGuids">Refresh GUIDs</button>
+    <button id="copy-guids-button" type="button" class="btn btn-light" onclick="copyGuids(this)">Copy GUIDs</button>
+    <span id="copy-guids-status" class="copy-status" role="status" aria-live="polite"></span>
 </div>
 <pre id="guid-container" tabindex="0" aria-label="Generated GUIDs">
 @foreach (var guid in guids)

@@ -4,15 +4,16 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <title>Online .NET GUID generator</title>
     <meta name="description"
-        content="Use the online GUID generator tool to generate GUID's backed by the .NET GUID API" />
+        content="Use the online GUID generator tool to generate GUIDs backed by the .NET GUID API" />
     <meta property="og:title" content="Online .NET GUID generator" />
     <meta name="twitter:title" content="Online .NET GUID generator" />
     <meta property="og:description"
-        content="Use the online GUID generator tool to generate GUID's backed by the .NET GUID API" />
+        content="Use the online GUID generator tool to generate GUIDs backed by the .NET GUID API" />
     <meta name="twitter:description"
-        content="Use the online GUID generator tool to generate GUID's backed by the .NET GUID API" />
+        content="Use the online GUID generator tool to generate GUIDs backed by the .NET GUID API" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:site" content="@RealSwimburger" />
     <meta name="twitter:creator" content="@RealSwimburger" />
@@ -49,8 +50,8 @@
         <div class="container">
             <h1 class="display-4">Online .NET GUID generator</h1>
             <p>
-                This tool uses Blazor WebAssembly to generate GUID's online for your convenience. 
-                These GUID's are generated using the same <code>Guid.NewGuid()</code> API as you would normally use in .NET.
+                This tool uses Blazor WebAssembly to generate GUIDs online for your convenience.
+                These GUIDs are generated using the same <code>Guid.NewGuid()</code> API as you would normally use in .NET.
                 Alternatively, you could simply use the <code>New-Guid</code> function in PowerShell.
             </p>
             <div id="app">Loading GUID Generator...</div>
@@ -76,16 +77,39 @@
     <script src="_framework/blazor.webassembly.js"></script>
     <script>
         (function () {
+            var feedbackTimer;
+
             function copyGuidsWithSelection(guids) {
                 var copyTextInput = document.getElementById("copy-input");
+                var previouslyFocusedElement = document.activeElement;
                 copyTextInput.value = guids;
                 copyTextInput.focus();
                 copyTextInput.select();
                 copyTextInput.setSelectionRange(0, copyTextInput.value.length);
-                return document.execCommand("copy");
+                var copied = document.execCommand("copy");
+                previouslyFocusedElement?.focus();
+                return copied;
             }
 
-            window.copyGuids = async function () {
+            function reportCopyResult(copied, button) {
+                var status = document.getElementById("copy-guids-status");
+                var message = copied ? "GUIDs copied" : "Copy failed";
+
+                window.clearTimeout(feedbackTimer);
+                status.textContent = "";
+                window.requestAnimationFrame(function () {
+                    status.textContent = message;
+                });
+                button.classList.toggle("btn-success", copied);
+                button.classList.toggle("btn-light", !copied);
+                feedbackTimer = window.setTimeout(function () {
+                    status.textContent = "";
+                    button.classList.remove("btn-success");
+                    button.classList.add("btn-light");
+                }, 2000);
+            }
+
+            window.copyGuids = async function (button) {
                 var guidContainer = document.getElementById("guid-container");
                 var guids = guidContainer.innerText;
                 var copied = false;
@@ -107,7 +131,7 @@
                     }
                 }
 
-                alert(copied ? "GUIDs copied" : "Unable to copy GUIDs");
+                reportCopyResult(copied, button);
             }
         })();
     </script>

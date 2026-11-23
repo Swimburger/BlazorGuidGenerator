@@ -3,7 +3,7 @@ const { test, expect } = require("@playwright/test");
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("button", { name: "Refresh GUID's" })).toBeVisible({ timeout: 30000 });
+  await expect(page.getByRole("button", { name: "Refresh GUIDs" })).toBeVisible({ timeout: 30000 });
 });
 
 test("loads the published application", async ({ page }) => {
@@ -18,7 +18,7 @@ test("supports zoom, dark mode, and a narrow viewport", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 });
   await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
   await page.reload();
-  await expect(page.getByRole("button", { name: "Refresh GUID's" })).toBeVisible({ timeout: 30000 });
+  await expect(page.getByRole("button", { name: "Refresh GUIDs" })).toBeVisible({ timeout: 30000 });
 
   const viewport = await page.locator('meta[name="viewport"]').getAttribute("content");
   expect(viewport).not.toContain("user-scalable=no");
@@ -42,7 +42,7 @@ test("generates and formats multiple GUIDs", async ({ page }) => {
 
 test("refresh replaces generated values", async ({ page }) => {
   const before = await page.locator("#guid-container").innerText();
-  await page.getByRole("button", { name: "Refresh GUID's" }).click();
+  await page.getByRole("button", { name: "Refresh GUIDs" }).click();
   await expect(page.locator("#guid-container")).not.toHaveText(before);
 });
 
@@ -58,19 +58,13 @@ test("uses the Clipboard API when it is available", async ({ page }) => {
     });
   });
   await page.reload();
-  await expect(page.getByRole("button", { name: "Copy GUID's" })).toBeVisible({ timeout: 30000 });
-
-  let message;
-  page.once("dialog", async (dialog) => {
-    message = dialog.message();
-    await dialog.dismiss();
-  });
-  await page.getByRole("button", { name: "Copy GUID's" }).click();
+  await expect(page.getByRole("button", { name: "Copy GUIDs" })).toBeVisible({ timeout: 30000 });
+  await page.getByRole("button", { name: "Copy GUIDs" }).click();
 
   const expected = await page.locator("#guid-container").innerText();
   const copied = await page.evaluate(() => window.copiedWithClipboardApi);
   expect(copied).toBe(expected);
-  expect(message).toBe("GUIDs copied");
+  await expect(page.getByRole("status")).toHaveText("GUIDs copied");
 });
 
 test("falls back to selection copy when the Clipboard API fails", async ({ page }) => {
@@ -90,14 +84,8 @@ test("falls back to selection copy when the Clipboard API fails", async ({ page 
     };
   });
   await page.reload();
-  await expect(page.getByRole("button", { name: "Copy GUID's" })).toBeVisible({ timeout: 30000 });
-
-  let message;
-  page.once("dialog", async (dialog) => {
-    message = dialog.message();
-    await dialog.dismiss();
-  });
-  await page.getByRole("button", { name: "Copy GUID's" }).click();
+  await expect(page.getByRole("button", { name: "Copy GUIDs" })).toBeVisible({ timeout: 30000 });
+  await page.getByRole("button", { name: "Copy GUIDs" }).click();
 
   const expected = await page.locator("#guid-container").innerText();
   const fallback = await page.evaluate(() => ({
@@ -105,7 +93,7 @@ test("falls back to selection copy when the Clipboard API fails", async ({ page 
     text: window.fallbackCopiedText,
   }));
   expect(fallback).toEqual({ command: "copy", text: expected });
-  expect(message).toBe("GUIDs copied");
+  await expect(page.getByRole("status")).toHaveText("GUIDs copied");
 });
 
 test("writes the generated values to the real Chromium clipboard", async ({ page, context, browserName }) => {
@@ -114,17 +102,12 @@ test("writes the generated values to the real Chromium clipboard", async ({ page
     origin: new URL(page.url()).origin,
   });
 
-  let message;
-  page.once("dialog", async (dialog) => {
-    message = dialog.message();
-    await dialog.dismiss();
-  });
-  await page.getByRole("button", { name: "Copy GUID's" }).click();
+  await page.getByRole("button", { name: "Copy GUIDs" }).click();
 
   const expected = await page.locator("#guid-container").innerText();
   const copied = await page.evaluate(() => navigator.clipboard.readText());
   expect(copied).toBe(expected);
-  expect(message).toBe("GUIDs copied");
+  await expect(page.getByRole("status")).toHaveText("GUIDs copied");
 });
 
 test("reports when both clipboard methods fail", async ({ page }) => {
@@ -140,16 +123,12 @@ test("reports when both clipboard methods fail", async ({ page }) => {
     document.execCommand = () => false;
   });
   await page.reload();
-  await expect(page.getByRole("button", { name: "Copy GUID's" })).toBeVisible({ timeout: 30000 });
+  const copyButton = page.getByRole("button", { name: "Copy GUIDs" });
+  await expect(copyButton).toBeVisible({ timeout: 30000 });
+  await copyButton.click();
 
-  let message;
-  page.once("dialog", async (dialog) => {
-    message = dialog.message();
-    await dialog.dismiss();
-  });
-  await page.getByRole("button", { name: "Copy GUID's" }).click();
-
-  expect(message).toBe("Unable to copy GUIDs");
+  await expect(page.getByRole("status")).toHaveText("Copy failed");
+  await expect(copyButton).toBeEnabled();
 });
 
 test("SPA fallback serves the application shell", async ({ page }) => {
