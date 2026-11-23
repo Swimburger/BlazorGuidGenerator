@@ -78,6 +78,7 @@
     <script>
         (function () {
             var feedbackTimer;
+            var lastCopyMessage = "";
 
             function copyGuidsWithSelection(guids) {
                 var copyTextInput = document.getElementById("copy-input");
@@ -94,6 +95,10 @@
             function reportCopyResult(copied, button) {
                 var status = document.getElementById("copy-guids-status");
                 var message = copied ? "GUIDs copied" : "Copy failed";
+                if (message === lastCopyMessage) {
+                    message += "\u00a0";
+                }
+                lastCopyMessage = message.trim();
 
                 window.clearTimeout(feedbackTimer);
                 status.textContent = "";
