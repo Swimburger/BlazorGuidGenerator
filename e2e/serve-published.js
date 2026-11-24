@@ -11,6 +11,8 @@ const contentTypes = new Map([
   [".ico", "image/x-icon"],
   [".js", "text/javascript; charset=utf-8"],
   [".json", "application/json; charset=utf-8"],
+  [".png", "image/png"],
+  [".txt", "text/plain; charset=utf-8"],
   [".wasm", "application/wasm"],
 ]);
 
@@ -45,6 +47,9 @@ http.createServer((request, response) => {
     "Content-Type": contentTypes.get(path.extname(filePath)) || "application/octet-stream",
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Content-Security-Policy": "base-uri 'self'; object-src 'none'; frame-ancestors 'none'",
+    "Permissions-Policy": "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
+    "X-Frame-Options": "DENY",
     "Vary": "Accept-Encoding",
     "Cache-Control": requestPath.startsWith("/_framework/")
       ? "public, max-age=31536000, immutable"

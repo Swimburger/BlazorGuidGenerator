@@ -12,6 +12,11 @@ test("loads the published application", async ({ page }) => {
   await expect(page.locator('script[src*="googletagmanager.com"]')).toHaveCount(0);
   const value = (await page.locator("#guid-container").innerText()).trim();
   expect(value).toMatch(/^\{[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\}$/i);
+
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://newguids.swimburger.net/");
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", "https://newguids.swimburger.net/SocialImage.png");
+  await expect(page.locator('link[href*="cdn.jsdelivr.net"], script[src*="cdn.jsdelivr.net"]')).toHaveCount(0);
+  await expect(page.locator('img[src^="https://swimburger.net/content"], link[href^="https://swimburger.net/content"]')).toHaveCount(0);
 });
 
 test("supports zoom, dark mode, and a narrow viewport", async ({ page }) => {
@@ -141,6 +146,18 @@ test("serves Cloudflare-ready cache, security, and WebAssembly headers", async (
   expect(documentResponse.headers()["cache-control"]).toBe("public, max-age=0, must-revalidate");
   expect(documentResponse.headers()["x-content-type-options"]).toBe("nosniff");
   expect(documentResponse.headers()["referrer-policy"]).toBe("strict-origin-when-cross-origin");
+  expect(documentResponse.headers()["content-security-policy"]).toBe("base-uri 'self'; object-src 'none'; frame-ancestors 'none'");
+  expect(documentResponse.headers()["permissions-policy"]).toContain("camera=()");
+  expect(documentResponse.headers()["x-frame-options"]).toBe("DENY");
+
+  const robotsResponse = await request.get("/robots.txt");
+  expect(robotsResponse.status()).toBe(200);
+  expect(robotsResponse.headers()["content-type"]).toContain("text/plain");
+  expect(await robotsResponse.text()).toBe("User-agent: *\nAllow: /\n");
+
+  const socialImageResponse = await request.get("/SocialImage.png");
+  expect(socialImageResponse.status()).toBe(200);
+  expect(socialImageResponse.headers()["content-type"]).toContain("image/png");
 
   const wasmUrl = await page.evaluate(() => {
     const entry = performance.getEntriesByType("resource").find((resource) => resource.name.includes(".wasm"));

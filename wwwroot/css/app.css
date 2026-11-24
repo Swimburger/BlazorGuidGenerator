@@ -4,6 +4,7 @@
   --surface: #fff;
   --surface-subtle: #eee;
   --text: #212529;
+  --footer-link: #0759ad;
   --focus: #6c0a51;
   --output-surface: #212529;
   --output-text: #f8f9fa;
@@ -85,6 +86,11 @@ footer img {
   margin-right: 5px;
 }
 
+footer a {
+  color: var(--footer-link);
+  text-decoration: underline;
+}
+
 @media (min-width: 1200px) {
   .container {
       max-width: 960px;
@@ -97,6 +103,7 @@ footer img {
     --surface: #17141a;
     --surface-subtle: #2d2731;
     --text: #f5f2f5;
+    --footer-link: #8bb9fe;
     --focus: #ff91c8;
     --output-surface: #0d1117;
     --output-text: #e6edf3;
