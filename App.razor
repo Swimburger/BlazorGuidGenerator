@@ -1,90 +1,137 @@
-﻿<div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-    <label class="form-label mb-0" for="amount-of-guids-input">Amount of GUIDs:</label>
-    <input type="number" class="form-control" id="amount-of-guids-input" min="0" step="1"
-        @bind="AmountOfGuids" @bind:event="oninput">
+<div class="generator-controls">
+    <div class="quick-options">
+        <div class="quantity-control">
+            <label class="form-label mb-0" id="quantity-label" for="amount-of-guids-input">Quantity</label>
+            <div class="quantity-stepper" role="group" aria-labelledby="quantity-label">
+                <button type="button" class="quantity-stepper-button" aria-label="Decrease quantity"
+                    disabled="@(AmountOfGuids <= MinimumAmountOfGuids)" @onclick="DecreaseAmountOfGuids">
+                    <span aria-hidden="true">−</span>
+                </button>
+                <input type="number" class="form-control" id="amount-of-guids-input" min="0" step="1"
+                    inputmode="numeric" @bind="AmountOfGuids">
+                <button type="button" class="quantity-stepper-button" aria-label="Increase quantity"
+                    @onclick="IncreaseAmountOfGuids">
+                    <span aria-hidden="true">+</span>
+                </button>
+            </div>
+        </div>
+        <div class="form-check case-control">
+            <input class="form-check-input" type="checkbox" id="uppercase-checkbox" @bind="MakeGuidsUpperCase">
+            <label class="form-check-label" for="uppercase-checkbox">Uppercase</label>
+        </div>
+    </div>
+    <fieldset class="guid-options" aria-describedby="guid-format-hint">
+        <legend>.NET GUID format</legend>
+        <p id="guid-format-hint" class="format-hint">Matches <code>Guid.ToString(format)</code>.</p>
+        <div class="guid-format-options">
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="guid-format" id="format-d" value="D"
+                    checked="@(guidFormat == 'D')" @onchange="() => SetGuidFormat('D')">
+                <label class="form-check-label" for="format-d"><code>D</code><span>Hyphens</span></label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="guid-format" id="format-n" value="N"
+                    checked="@(guidFormat == 'N')" @onchange="() => SetGuidFormat('N')">
+                <label class="form-check-label" for="format-n"><code>N</code><span>No separators</span></label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="guid-format" id="format-b" value="B"
+                    checked="@(guidFormat == 'B')" @onchange="() => SetGuidFormat('B')">
+                <label class="form-check-label" for="format-b"><code>B</code><span>Braces</span></label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="guid-format" id="format-p" value="P"
+                    checked="@(guidFormat == 'P')" @onchange="() => SetGuidFormat('P')">
+                <label class="form-check-label" for="format-p"><code>P</code><span>Parentheses</span></label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="guid-format" id="format-x" value="X"
+                    checked="@(guidFormat == 'X')" @onchange="() => SetGuidFormat('X')">
+                <label class="form-check-label" for="format-x"><code>X</code><span>Hexadecimal components</span></label>
+            </div>
+        </div>
+    </fieldset>
+    <div class="guid-actions">
+        <button type="button" class="btn btn-primary" @onclick="RefreshGuids">Refresh GUIDs</button>
+        <button id="copy-guids-button" type="button" class="btn btn-light">Copy GUIDs</button>
+    </div>
 </div>
-<fieldset class="guid-options mb-3">
-    <legend class="visually-hidden">GUID formatting options</legend>
-    <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="uppercase-checkbox" @bind="makeGuidsUpperCase">
-        <label class="form-check-label" for="uppercase-checkbox">
-            UPPERCASE
-        </label>
+<section class="output-section" aria-labelledby="guid-output-heading">
+    <div class="output-heading-row">
+        <h2 id="guid-output-heading">Generated GUIDs</h2>
+        <span id="guid-status" class="guid-status" role="status" aria-live="polite" aria-atomic="true">@statusMessage</span>
     </div>
-    <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="braces-checkbox" @bind="includeBracesForGuids">
-        <label class="form-check-label" for="braces-checkbox">
-            Braces {...}
-        </label>
-    </div>
-    <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="hyphens-checkbox" @bind="includeHyphensForGuids">
-        <label class="form-check-label" for="hyphens-checkbox">
-            Hyphens ...-...-...-...-...
-        </label>
-    </div>
-</fieldset>
-<div class="guid-actions d-flex flex-wrap gap-2">
-    <button type="button" class="btn btn-primary" @onclick="RefreshGuids">Refresh GUIDs</button>
-    <button id="copy-guids-button" type="button" class="btn btn-light" onclick="copyGuids(this)">Copy GUIDs</button>
-    <span id="copy-guids-status" class="copy-status" role="status" aria-live="polite"></span>
-</div>
-<pre id="guid-container" tabindex="0" aria-label="Generated GUIDs">
+    <pre id="guid-container" role="region" tabindex="0" aria-labelledby="guid-output-heading"><code>
 @foreach (var guid in guids)
 {
 @FormatGuid(guid)
 }
-</pre>
+</code></pre>
+</section>
 
 @code{
+    private const int MinimumAmountOfGuids = 0;
     private int amountOfGuids = 1;
     private int AmountOfGuids
     {
-        get
-        {
-            return amountOfGuids;
-        }
+        get => amountOfGuids;
         set
         {
-            amountOfGuids = value;
+            if (amountOfGuids == value)
+            {
+                return;
+            }
+
+            amountOfGuids = Math.Max(MinimumAmountOfGuids, value);
             AmountOfGuidsChanged();
+            AnnounceGeneratedGuids();
         }
     }
 
     private List<Guid> guids = new List<Guid>() { Guid.NewGuid() };
     private bool makeGuidsUpperCase = false;
-    private bool includeBracesForGuids = true;
-    private bool includeHyphensForGuids = true;
+    private char guidFormat = 'B';
+    private string statusMessage = string.Empty;
+
+    private bool MakeGuidsUpperCase
+    {
+        get => makeGuidsUpperCase;
+        set
+        {
+            if (makeGuidsUpperCase == value)
+            {
+                return;
+            }
+
+            makeGuidsUpperCase = value;
+            AnnounceStatus(value ? "GUIDs changed to uppercase." : "GUIDs changed to lowercase.");
+        }
+    }
 
     private string FormatGuid(Guid guid)
     {
-        var output = guid.ToString();
+        var output = guid.ToString(guidFormat.ToString());
         if (makeGuidsUpperCase)
         {
-            output = output.ToUpper();
-        }
-
-        if (includeBracesForGuids)
-        {
-            output = $"{{{output}}}";
-        }
-
-        if (!includeHyphensForGuids)
-        {
-            output = output.Replace("-", "");
+            output = output.ToUpperInvariant();
         }
 
         return $"{output}\n";
     }
 
-    private void AmountOfGuidsChanged()
+    private void SetGuidFormat(char format)
     {
-        if (amountOfGuids < 0)
+        if (guidFormat == format)
         {
-            guids.Clear();
             return;
         }
 
+        guidFormat = format;
+        AnnounceStatus($"GUID format changed to {format}.");
+    }
+
+    private void AmountOfGuidsChanged()
+    {
         if (guids.Count == amountOfGuids)
         {
             return;
@@ -103,11 +150,44 @@
         }
     }
 
+    private void DecreaseAmountOfGuids()
+    {
+        if (AmountOfGuids > MinimumAmountOfGuids)
+        {
+            AmountOfGuids--;
+        }
+    }
+
+    private void IncreaseAmountOfGuids()
+    {
+        if (AmountOfGuids < int.MaxValue)
+        {
+            AmountOfGuids++;
+        }
+    }
+
     private void RefreshGuids()
     {
         for (int i = 0; i < guids.Count; i++)
         {
             guids[i] = Guid.NewGuid();
         }
+
+        AnnounceGeneratedGuids();
+    }
+
+    private void AnnounceGeneratedGuids()
+    {
+        AnnounceStatus(guids.Count switch
+        {
+            0 => "No GUIDs generated.",
+            1 => "Generated 1 GUID.",
+            _ => $"Generated {guids.Count} GUIDs."
+        });
+    }
+
+    private void AnnounceStatus(string message)
+    {
+        statusMessage = statusMessage == message ? $"{message}\u00a0" : message;
     }
 }
