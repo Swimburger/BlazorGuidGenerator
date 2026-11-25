@@ -6,7 +6,7 @@
     "node": ">=26"
   },
   "devDependencies": {
-    "cf": "^1.0.0-beta.32",
-    "wrangler": "^4.162.0"
+    "cf": "^1.0.0-rc.5",
+    "wrangler": "^4.168.0"
   }
 }
